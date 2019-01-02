@@ -1,6 +1,8 @@
 
 from tkinter import *
-from tkinter.colorchooser import askcolor
+from tkinter import messagebox
+from PIL import Image, ImageDraw
+import cnnModel
 
 class SimpleDrawingApp(object):
 
@@ -22,7 +24,7 @@ class SimpleDrawingApp(object):
         self.choose_size_button = Scale(self.root, from_=1, to=10, orient=HORIZONTAL)
         self.choose_size_button.grid(row=0, column=3)
 
-        self.predict_button = Button(self.root, text='Predict', command='', width=15)
+        self.predict_button = Button(self.root, text='Predict', command=self.predict, width=15)
         self.predict_button.grid(row=0, column=4)
 
         self.create_canvas()
@@ -47,10 +49,23 @@ class SimpleDrawingApp(object):
         self.c = Canvas(self.root, bg='white', width=600, height=600)
         self.c.grid(row=1, columnspan=5)
 
+        self.toSaveImg = Image.new("RGB", (600, 600), color='white')
+        self.draw = ImageDraw.Draw(self.toSaveImg)
+
         self.setup()
         self.root.mainloop()
 
     def clear_all(self):
+        self.create_canvas()
+
+    def predict(self):
+        filename = "my_drawing.jpg"
+        basewidth = 150
+        wpercent = (basewidth/float( self.toSaveImg.size[0]))
+        hsize = int((float( self.toSaveImg.size[1])*float(wpercent)))
+        self.toSaveImg = self.toSaveImg.resize((basewidth,hsize), Image.ANTIALIAS)
+        predicted_class = cnnModel.predict_class(self.toSaveImg)
+        messagebox.showinfo("Information","Mental Age: " + predicted_class)
         self.create_canvas()
 
     def activate_button(self, some_button, eraser_mode=False):
@@ -66,6 +81,11 @@ class SimpleDrawingApp(object):
             self.c.create_line(self.old_x, self.old_y, event.x, event.y,
                                width=self.line_width, fill=paint_color,
                                capstyle=ROUND, smooth=TRUE, splinesteps=36)
+            width = 400
+            height = 300
+            center = height//2
+            self.draw.line([(self.old_x, self.old_y), (event.x, event.y)],
+                            width=self.line_width, fill=paint_color)
         self.old_x = event.x
 
         self.old_y = event.y

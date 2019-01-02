@@ -4,7 +4,7 @@ from tkinter.colorchooser import askcolor
 
 class SimpleDrawingApp(object):
 
-    DEFAULT_PEN_SIZE = 5.0
+    DEFAULT_PEN_SIZE = 10.0
     DEFAULT_COLOR = 'black'
 
     def __init__(self):
@@ -16,17 +16,16 @@ class SimpleDrawingApp(object):
         self.eraser_button = Button(self.root, text='Eraser', command=self.use_eraser, width=8)
         self.eraser_button.grid(row=0, column=1)
 
+        self.clear_all_button = Button(self.root, text='Clear All', command=self.clear_all, width=8)
+        self.clear_all_button.grid(row=0, column=2)
+
         self.choose_size_button = Scale(self.root, from_=1, to=10, orient=HORIZONTAL)
-        self.choose_size_button.grid(row=0, column=2)
+        self.choose_size_button.grid(row=0, column=3)
 
         self.predict_button = Button(self.root, text='Predict', command='', width=15)
         self.predict_button.grid(row=0, column=4)
 
-        self.c = Canvas(self.root, bg='white', width=600, height=600)
-        self.c.grid(row=1, columnspan=5)
-
-        self.setup()
-        self.root.mainloop()
+        self.create_canvas()
 
     def setup(self):
         self.old_x = None
@@ -44,6 +43,16 @@ class SimpleDrawingApp(object):
     def use_eraser(self):
         self.activate_button(self.eraser_button, eraser_mode=True)
 
+    def create_canvas(self):
+        self.c = Canvas(self.root, bg='white', width=600, height=600)
+        self.c.grid(row=1, columnspan=5)
+
+        self.setup()
+        self.root.mainloop()
+
+    def clear_all(self):
+        self.create_canvas()
+
     def activate_button(self, some_button, eraser_mode=False):
         self.active_button.config(relief=RAISED)
         some_button.config(relief=SUNKEN)
@@ -58,10 +67,13 @@ class SimpleDrawingApp(object):
                                width=self.line_width, fill=paint_color,
                                capstyle=ROUND, smooth=TRUE, splinesteps=36)
         self.old_x = event.x
+
         self.old_y = event.y
+
 
     def reset(self, event):
         self.old_x, self.old_y = None, None
+
 
 
 if __name__ == '__main__':

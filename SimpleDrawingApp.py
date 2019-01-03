@@ -2,12 +2,15 @@
 from tkinter import *
 from tkinter import messagebox
 from PIL import Image, ImageDraw
-import cnnModel
+import imageProcessing
+
+
 
 class SimpleDrawingApp(object):
 
-    DEFAULT_PEN_SIZE = 10.0
     DEFAULT_COLOR = 'black'
+    DEFAULT_ADD_PEN = 3
+    DEFAULT_SIZE = 600
 
     def __init__(self):
         self.root = Tk()
@@ -32,7 +35,7 @@ class SimpleDrawingApp(object):
     def setup(self):
         self.old_x = None
         self.old_y = None
-        self.line_width = self.choose_size_button.get()
+        self.line_width = self.choose_size_button.get()+self.DEFAULT_ADD_PEN
         self.color = self.DEFAULT_COLOR
         self.eraser_on = False
         self.active_button = self.pen_button
@@ -46,11 +49,11 @@ class SimpleDrawingApp(object):
         self.activate_button(self.eraser_button, eraser_mode=True)
 
     def create_canvas(self):
-        self.c = Canvas(self.root, bg='white', width=600, height=600)
+        self.c = Canvas(self.root, bg='white', width=self.DEFAULT_SIZE, height=self.DEFAULT_SIZE)
         self.c.grid(row=1, columnspan=5)
 
-        self.toSaveImg = Image.new("RGB", (600, 600), color='white')
-        self.draw = ImageDraw.Draw(self.toSaveImg)
+        self.toProcessImg = Image.new("RGB", (self.DEFAULT_SIZE, self.DEFAULT_SIZE), color='white')
+        self.draw = ImageDraw.Draw(self.toProcessImg)
 
         self.setup()
         self.root.mainloop()
@@ -59,12 +62,14 @@ class SimpleDrawingApp(object):
         self.create_canvas()
 
     def predict(self):
-        filename = "my_drawing.jpg"
-        basewidth = 150
-        wpercent = (basewidth/float( self.toSaveImg.size[0]))
-        hsize = int((float( self.toSaveImg.size[1])*float(wpercent)))
-        self.toSaveImg = self.toSaveImg.resize((basewidth,hsize), Image.ANTIALIAS)
-        predicted_class = cnnModel.predict_class(self.toSaveImg)
+
+        self.toProcessImg = imageProcessing.rm_white_space(self.toProcessImg, Image)
+        # basewidth = 150
+        # wpercent = (basewidth/float( self.toProcessImg.size[0]))
+        # hsize = int((float( cropped.size[1])*float(wpercent)))
+        self.toProcessImg = self.toProcessImg.resize((150,150), Image.BICUBIC)
+        
+        predicted_class = imageProcessing.predict_class(self.toProcessImg)
         messagebox.showinfo("Information","Mental Age: " + predicted_class)
         self.create_canvas()
 
@@ -75,15 +80,13 @@ class SimpleDrawingApp(object):
         self.eraser_on = eraser_mode
 
     def paint(self, event):
-        self.line_width = self.choose_size_button.get()
+        self.line_width = self.choose_size_button.get()+self.DEFAULT_ADD_PEN
         paint_color = 'white' if self.eraser_on else self.color
         if self.old_x and self.old_y:
             self.c.create_line(self.old_x, self.old_y, event.x, event.y,
                                width=self.line_width, fill=paint_color,
                                capstyle=ROUND, smooth=TRUE, splinesteps=36)
-            width = 400
-            height = 300
-            center = height//2
+            
             self.draw.line([(self.old_x, self.old_y), (event.x, event.y)],
                             width=self.line_width, fill=paint_color)
         self.old_x = event.x

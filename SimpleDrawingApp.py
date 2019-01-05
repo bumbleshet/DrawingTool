@@ -1,7 +1,7 @@
 
 from tkinter import *
-from tkinter import messagebox
-from PIL import Image, ImageDraw
+from tkinter import messagebox, filedialog
+from PIL import Image, ImageDraw, ImageTk
 import imageProcessing
 
 
@@ -14,21 +14,24 @@ class SimpleDrawingApp(object):
 
     def __init__(self):
         self.root = Tk()
+        
+        self.opn_img_btn = Button(self.root, text='Open Image', command=self.open_img, width=8)
+        self.opn_img_btn.grid(row=0, column=0)
 
         self.pen_button = Button(self.root, text='Pen', command=self.use_pen, width=8)
-        self.pen_button.grid(row=0, column=0)
+        self.pen_button.grid(row=0, column=1)
 
         self.eraser_button = Button(self.root, text='Eraser', command=self.use_eraser, width=8)
-        self.eraser_button.grid(row=0, column=1)
+        self.eraser_button.grid(row=0, column=2)
 
-        self.clear_all_button = Button(self.root, text='Clear All', command=self.clear_all, width=8)
-        self.clear_all_button.grid(row=0, column=2)
+        self.clear_all_button = Button(self.root, text='Erase All', command=self.clear_all, width=8)
+        self.clear_all_button.grid(row=0, column=3)
 
         self.choose_size_button = Scale(self.root, from_=1, to=10, orient=HORIZONTAL)
-        self.choose_size_button.grid(row=0, column=3)
+        self.choose_size_button.grid(row=0, column=4)
 
         self.predict_button = Button(self.root, text='Predict', command=self.predict, width=15)
-        self.predict_button.grid(row=0, column=4)
+        self.predict_button.grid(row=0, column=5)
 
         self.create_canvas()
 
@@ -42,6 +45,15 @@ class SimpleDrawingApp(object):
         self.c.bind('<B1-Motion>', self.paint)
         self.c.bind('<ButtonRelease-1>', self.reset)
 
+    def open_img(self):
+        self.root.fileName = filedialog.askopenfilename(filetypes =[("JPEG Images", "*.jpg"), ("PNG Images", "*.png")])
+        self.loadImage = Image.open(self.root.fileName) 
+        self.loadImage = self.loadImage.resize((600,600), Image.BICUBIC) 
+        self.toProcessImg = self.loadImage   
+        self.loadImage = ImageTk.PhotoImage(self.loadImage)
+        self.c.create_image(0, 0, anchor="nw", image=self.loadImage)
+        
+
     def use_pen(self):
         self.activate_button(self.pen_button)
 
@@ -50,7 +62,7 @@ class SimpleDrawingApp(object):
 
     def create_canvas(self):
         self.c = Canvas(self.root, bg='white', width=self.DEFAULT_SIZE, height=self.DEFAULT_SIZE)
-        self.c.grid(row=1, columnspan=5)
+        self.c.grid(row=1, columnspan=6)
 
         self.toProcessImg = Image.new("RGB", (self.DEFAULT_SIZE, self.DEFAULT_SIZE), color='white')
         self.draw = ImageDraw.Draw(self.toProcessImg)
@@ -69,8 +81,8 @@ class SimpleDrawingApp(object):
         # hsize = int((float( cropped.size[1])*float(wpercent)))
         self.toProcessImg = self.toProcessImg.resize((150,150), Image.BICUBIC)
         
-        predicted_class = imageProcessing.predict_class(self.toProcessImg)
-        messagebox.showinfo("Information","Mental Age: " + predicted_class)
+        self.predicted_class = imageProcessing.predict_class(self.toProcessImg)
+        messagebox.showinfo("Information","Mental Age: " + self.predicted_class)
         self.create_canvas()
 
     def activate_button(self, some_button, eraser_mode=False):

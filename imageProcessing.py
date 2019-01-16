@@ -40,8 +40,8 @@ def predict_class(img):
     print(y_prob)
     y_classes = y_prob.argmax(axis=-1)
     print(y_classes)
-    predicted_label = ['M1', 'M10', 'M11', 'M12', 'M13', 'M2', 'M3', 'M4', 'M5', 'M6', 'M7', 'M8'
-                       ,'M9']
+    predicted_label = [1, 10, 11, 12, 13, 2, 3, 4, 5, 6, 7, 8
+                       ,9]
     print(predicted_label[y_classes[0]])
     return predicted_label[y_classes[0]]
 

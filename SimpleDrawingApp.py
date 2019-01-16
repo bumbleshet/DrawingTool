@@ -1,6 +1,6 @@
 
 from tkinter import *
-from tkinter import messagebox, filedialog
+from tkinter import messagebox, filedialog, simpledialog
 from PIL import Image, ImageDraw, ImageTk
 import imageProcessing
 
@@ -14,6 +14,7 @@ class SimpleDrawingApp(object):
 
     def __init__(self):
         self.root = Tk()
+        messagebox.showinfo("Directions", "I want you to make a picture of a person. Make the very best picture that you can. Take your time and work very carefully. Try very hard and see what a good picture you can make.")
         self.root.bind('<Control-z>', self.undo) 
         self.root.bind('<Control-y>', self.redo) 
         self.opn_img_btn = Button(self.root, text='Open Image', command=self.open_img, width=8)
@@ -36,7 +37,8 @@ class SimpleDrawingApp(object):
         self.stack = [] 
         self.temp_stack = [] 
         self.deleted_stack = []
-        self.create_canvas()
+        
+        self.create_canvas()   
 
     def setup(self):
         self.old_x = None
@@ -88,7 +90,10 @@ class SimpleDrawingApp(object):
         self.toProcessImg = self.toProcessImg.resize((150,150), Image.BICUBIC)
         
         self.predicted_class = imageProcessing.predict_class(self.toProcessImg)
-        messagebox.showinfo("Information","Mental Age: " + self.predicted_class)
+        years = simpledialog.askinteger("What's your age?", self.root)
+        months = simpledialog.askinteger("How many months until your birthday?", self.root)
+        years = (years*12) + months
+        messagebox.showinfo("Information","Your IQ is most probably: " + str(int((((self.predicted_class*12)/years)*100)-3)) + "-" + str(int((((self.predicted_class*12)/years)*100)+3)))
         self.create_canvas()
 
     def activate_button(self, some_button, eraser_mode=False):

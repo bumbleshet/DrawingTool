@@ -14,7 +14,8 @@ class SimpleDrawingApp(object):
 
     def __init__(self):
         self.root = Tk()
-        
+        self.root.bind('<Control-z>', self.undo) 
+        self.root.bind('<Control-y>', self.redo) 
         self.opn_img_btn = Button(self.root, text='Open Image', command=self.open_img, width=8)
         self.opn_img_btn.grid(row=0, column=0)
 
@@ -32,7 +33,9 @@ class SimpleDrawingApp(object):
 
         self.predict_button = Button(self.root, text='Predict', command=self.predict, width=15)
         self.predict_button.grid(row=0, column=5)
-
+        self.stack = [] 
+        self.temp_stack = [] 
+        self.deleted_stack = []
         self.create_canvas()
 
     def setup(self):
@@ -47,9 +50,9 @@ class SimpleDrawingApp(object):
 
     def open_img(self):
         self.root.fileName = filedialog.askopenfilename(filetypes =[("JPEG Images", "*.jpg"), ("PNG Images", "*.png")])
-        self.loadImage = Image.open(self.root.fileName) 
+        self.loadImage = Image.open(self.root.fileName)    
         self.loadImage = self.loadImage.resize((600,600), Image.BICUBIC) 
-        self.toProcessImg = self.loadImage   
+        self.toProcessImg = self.loadImage 
         self.loadImage = ImageTk.PhotoImage(self.loadImage)
         self.c.create_image(0, 0, anchor="nw", image=self.loadImage)
         
@@ -72,6 +75,9 @@ class SimpleDrawingApp(object):
 
     def clear_all(self):
         self.create_canvas()
+        self.stack = [] 
+        self.temp_stack = [] 
+        self.deleted_stack = []
 
     def predict(self):
 
@@ -94,17 +100,43 @@ class SimpleDrawingApp(object):
     def paint(self, event):
         self.line_width = self.choose_size_button.get()+self.DEFAULT_ADD_PEN
         paint_color = 'white' if self.eraser_on else self.color
+        attib = dict()
         if self.old_x and self.old_y:
-            self.c.create_line(self.old_x, self.old_y, event.x, event.y,
+
+            x = self.c.create_line(self.old_x, self.old_y, event.x, event.y,
                                width=self.line_width, fill=paint_color,
-                               capstyle=ROUND, smooth=TRUE, splinesteps=36)
-            
+                               capstyle=ROUND, smooth=TRUE, splinesteps=36, 
+                               tags='temp_line')
+            attib.update({'old_x': self.old_x, 'old_y': self.old_y, 
+                               'event.x': event.x, 'event.y': event.y,
+                               'line_width': self.line_width, 'paint_color': paint_color})
+            self.stack.append(x)
+            self.temp_stack.append(attib)
+            self.stillValid = len(self.temp_stack)
             self.draw.line([(self.old_x, self.old_y), (event.x, event.y)],
                             width=self.line_width, fill=paint_color)
         self.old_x = event.x
 
         self.old_y = event.y
 
+    def undo(self, event):
+        x = self.stack.pop()
+        y = self.temp_stack.pop()
+        self.deleted_stack.append(y)
+        self.c.delete(x)  
+    def redo(self, event):
+        attib = dict()
+        attib_deleted = self.deleted_stack.pop()
+        x = self.c.create_line(attib_deleted['old_x'], attib_deleted['old_y'], attib_deleted['event.x'], attib_deleted['event.y'],
+                            width=attib_deleted['line_width'], fill=attib_deleted['paint_color'],
+                            capstyle=ROUND, smooth=TRUE, splinesteps=36, 
+                            tags='temp_line')  
+        attib.update({'old_x': attib['old_x'], 'old_y': attib['old_y'], 
+                            'event.x': attib['event.x'], 'event.y': attib['event.y'],
+                            'line_width': attib['line_width'], 'paint_color': attib['paint_color']})
+        self.stack.append(x)
+        self.temp_stack.append(attib)
+        
 
     def reset(self, event):
         self.old_x, self.old_y = None, None

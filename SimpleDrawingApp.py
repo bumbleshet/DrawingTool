@@ -35,6 +35,7 @@ class SimpleDrawingApp(object):
         self.predict_button = Button(self.root, text='Predict', command=self.predict, width=15)
         self.predict_button.grid(row=0, column=5)
         self.stack = [] 
+        self.stack2 = [] 
         self.temp_stack = [] 
         self.deleted_stack = []
         
@@ -118,16 +119,19 @@ class SimpleDrawingApp(object):
             self.stack.append(x)
             self.temp_stack.append(attib)
             self.stillValid = len(self.temp_stack)
-            self.draw.line([(self.old_x, self.old_y), (event.x, event.y)],
+            y = self.draw.line([(self.old_x, self.old_y), (event.x, event.y)],
                             width=self.line_width, fill=paint_color)
+            self.stack2.append(y)
         self.old_x = event.x
 
         self.old_y = event.y
 
     def undo(self, event):
         x = self.stack.pop()
-        y = self.temp_stack.pop()
-        self.deleted_stack.append(y)
+        deleted_attib = self.temp_stack.pop()
+        y = self.stack2.pop()
+        del y
+        self.deleted_stack.append(deleted_attib)
         self.c.delete(x)  
     def redo(self, event):
         attib = dict()
@@ -139,6 +143,10 @@ class SimpleDrawingApp(object):
         attib.update({'old_x': attib['old_x'], 'old_y': attib['old_y'], 
                             'event.x': attib['event.x'], 'event.y': attib['event.y'],
                             'line_width': attib['line_width'], 'paint_color': attib['paint_color']})
+        
+         y = self.draw.line([(attib_deleted['old_x'], attib_deleted['old_y']), (attib_deleted['event.x'], attib_deleted['event.y'])],
+                            width=attib_deleted['line_width'], fill=attib_deleted['paint_color'])
+        self.stack2.append(y)
         self.stack.append(x)
         self.temp_stack.append(attib)
         

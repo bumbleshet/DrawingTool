@@ -93,7 +93,7 @@ class SimpleDrawingApp(object):
         years = simpledialog.askinteger("What's your age?", self.root)
         months = simpledialog.askinteger("How many months until your birthday?", self.root)
         years = (years*12) + months
-        messagebox.showinfo("Information","Your IQ is most probably: " + str(int((((self.predicted_class*12)/years)*100)-3)) + "-" + str(int((((self.predicted_class*12)/years)*100)+3)))
+        messagebox.showinfo("Information","Your IQ is most probably: " + str(int((((self.predicted_class*12)/years)*100))) + "-" + str(int(((((self.predicted_class*12)+9)/years)*100))))
         self.create_canvas()
 
     def activate_button(self, some_button, eraser_mode=False):

@@ -2,6 +2,7 @@
 from tkinter import *
 from tkinter import messagebox, filedialog, simpledialog
 from PIL import Image, ImageDraw, ImageTk
+import pyscreenshot as ImageGrab
 import imageProcessing
 
 
@@ -35,7 +36,6 @@ class SimpleDrawingApp(object):
         self.predict_button = Button(self.root, text='Predict', command=self.predict, width=15)
         self.predict_button.grid(row=0, column=5)
         self.stack = [] 
-        self.stack2 = [] 
         self.temp_stack = [] 
         self.deleted_stack = []
         
@@ -55,11 +55,9 @@ class SimpleDrawingApp(object):
         self.root.fileName = filedialog.askopenfilename(filetypes =[("JPEG Images", "*.jpg"), ("PNG Images", "*.png")])
         self.loadImage = Image.open(self.root.fileName)    
         self.loadImage = self.loadImage.resize((600,600), Image.BICUBIC) 
-        self.toProcessImg = self.loadImage 
         self.loadImage = ImageTk.PhotoImage(self.loadImage)
-        self.c.create_image(0, 0, anchor="nw", image=self.loadImage)
+        self.c.create_image(0, 0, anchor="nw", image=self.loadImage)                                
         
-
     def use_pen(self):
         self.activate_button(self.pen_button)
 
@@ -69,21 +67,20 @@ class SimpleDrawingApp(object):
     def create_canvas(self):
         self.c = Canvas(self.root, bg='white', width=self.DEFAULT_SIZE, height=self.DEFAULT_SIZE)
         self.c.grid(row=1, columnspan=6)
-
-        self.toProcessImg = Image.new("RGB", (self.DEFAULT_SIZE, self.DEFAULT_SIZE), color='white')
-        self.draw = ImageDraw.Draw(self.toProcessImg)
-
         self.setup()
         self.root.mainloop()
 
     def clear_all(self):
+        self.erase_all_bool = True
+        self.temp_image = self.getter(self.c)
+        self.temp_image = ImageTk.PhotoImage(self.temp_image)
         self.create_canvas()
         self.stack = [] 
         self.temp_stack = [] 
         self.deleted_stack = []
 
     def predict(self):
-
+        self.toProcessImg = self.getter(self.c)
         self.toProcessImg = imageProcessing.rm_white_space(self.toProcessImg, Image)
         # basewidth = 150
         # wpercent = (basewidth/float( self.toProcessImg.size[0]))
@@ -107,6 +104,7 @@ class SimpleDrawingApp(object):
         self.line_width = self.choose_size_button.get()+self.DEFAULT_ADD_PEN
         paint_color = 'white' if self.eraser_on else self.color
         attib = dict()
+
         if self.old_x and self.old_y:
 
             x = self.c.create_line(self.old_x, self.old_y, event.x, event.y,
@@ -118,21 +116,28 @@ class SimpleDrawingApp(object):
                                'line_width': self.line_width, 'paint_color': paint_color})
             self.stack.append(x)
             self.temp_stack.append(attib)
-            self.stillValid = len(self.temp_stack)
-            y = self.draw.line([(self.old_x, self.old_y), (event.x, event.y)],
-                            width=self.line_width, fill=paint_color)
-            self.stack2.append(y)
-        self.old_x = event.x
-
+            
+        self.old_x = event.x    
         self.old_y = event.y
 
+    def getter(self, widget):
+        x=self.root.winfo_rootx()+widget.winfo_x()
+        y=self.root.winfo_rooty()+widget.winfo_y()
+        x1=x+widget.winfo_width()
+        y1=y+widget.winfo_height()
+        return ImageGrab.grab().crop((x,y,x1,y1))
+
     def undo(self, event):
-        x = self.stack.pop()
-        deleted_attib = self.temp_stack.pop()
-        y = self.stack2.pop()
-        del y
-        self.deleted_stack.append(deleted_attib)
-        self.c.delete(x)  
+        if(self.erase_all_bool):
+            self.c.create_image(0, 0, anchor="nw", image=self.temp_image) 
+            self.erase_all_bool = False
+        else:
+            x = self.stack.pop()
+            deleted_attib = self.temp_stack.pop()
+            self.deleted_stack.append(deleted_attib)
+            self.c.delete(x)  
+    
+
     def redo(self, event):
         attib = dict()
         attib_deleted = self.deleted_stack.pop()
@@ -140,13 +145,10 @@ class SimpleDrawingApp(object):
                             width=attib_deleted['line_width'], fill=attib_deleted['paint_color'],
                             capstyle=ROUND, smooth=TRUE, splinesteps=36, 
                             tags='temp_line')  
-        attib.update({'old_x': attib['old_x'], 'old_y': attib['old_y'], 
-                            'event.x': attib['event.x'], 'event.y': attib['event.y'],
-                            'line_width': attib['line_width'], 'paint_color': attib['paint_color']})
+        attib.update({'old_x': attib_deleted['old_x'], 'old_y': attib_deleted['old_y'], 
+                            'event.x': attib_deleted['event.x'], 'event.y': attib_deleted['event.y'],
+                            'line_width': attib_deleted['line_width'], 'paint_color': attib_deleted['paint_color']})
         
-         y = self.draw.line([(attib_deleted['old_x'], attib_deleted['old_y']), (attib_deleted['event.x'], attib_deleted['event.y'])],
-                            width=attib_deleted['line_width'], fill=attib_deleted['paint_color'])
-        self.stack2.append(y)
         self.stack.append(x)
         self.temp_stack.append(attib)
         

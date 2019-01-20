@@ -15,6 +15,7 @@ class SimpleDrawingApp(object):
 
     def __init__(self):
         self.root = Tk()
+        self.root.title('Drawing App')
         messagebox.showinfo("Directions", "I want you to make a picture of a person. Make the very best picture that you can. Take your time and work very carefully. Try very hard and see what a good picture you can make.")
         self.root.bind('<Control-z>', self.undo) 
         self.root.bind('<Control-y>', self.redo) 

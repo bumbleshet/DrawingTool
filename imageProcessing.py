@@ -45,3 +45,10 @@ def predict_class(img):
     print(predicted_label[y_classes[0]])
     return predicted_label[y_classes[0]]
 
+def add_white_border(img, Image):
+    old_size = img.size
+    new_size = (250, 250)
+    new_im = Image.new("RGB", new_size, "white")   
+    new_im.paste(img, ((new_size[0]-old_size[0])//2,
+                        ((new_size[1]-old_size[1])//2)))
+    return new_im

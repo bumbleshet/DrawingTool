@@ -83,9 +83,8 @@ class SimpleDrawingApp(object):
     def predict(self):
         self.toProcessImg = self.getter(self.c)
         self.toProcessImg = imageProcessing.rm_white_space(self.toProcessImg, Image)
-        # basewidth = 150
-        # wpercent = (basewidth/float( self.toProcessImg.size[0]))
-        # hsize = int((float( cropped.size[1])*float(wpercent)))
+        self.toProcessImg = self.toProcessImg.resize((150,150), Image.BICUBIC)
+        self.toProcessImg = imageProcessing.add_white_border(self.toProcessImg, Image)
         self.toProcessImg = self.toProcessImg.resize((150,150), Image.BICUBIC)
         
         self.predicted_class = imageProcessing.predict_class(self.toProcessImg)

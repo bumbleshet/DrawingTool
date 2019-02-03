@@ -39,6 +39,7 @@ class SimpleDrawingApp(object):
         self.stack = [] 
         self.temp_stack = [] 
         self.deleted_stack = []
+        self.erase_all_bool = False
         
         self.create_canvas()   
 

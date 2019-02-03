@@ -1,5 +1,5 @@
 import numpy as np
-from keras.preprocessing import image
+# from keras.preprocessing import image
 from keras.models import load_model
 import itertools
 import matplotlib.pyplot as plt
@@ -8,7 +8,7 @@ from skimage.io import imread
 from skimage.morphology import convex_hull_image
 
 
-model = load_model('cnnModel.hdf5')
+model = load_model('cnn_model2_512.hdf5')
 
 def rm_white_space(img, Image):
     im1 = 1 - rgb2gray(np.array(img))

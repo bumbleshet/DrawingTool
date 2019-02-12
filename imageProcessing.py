@@ -8,9 +8,10 @@ from skimage.io import imread
 from skimage.morphology import convex_hull_image
 
 
-model = load_model('cnn_model1_512.hdf5')
+model = load_model('cnn_model2_512.hdf5')
 
 def rm_white_space(img, Image):
+    isAddPadding = True
     im1 = 1 - rgb2gray(np.array(img))
     threshold = 0.5
     im1[im1 <= threshold] = 0
@@ -18,7 +19,11 @@ def rm_white_space(img, Image):
     chull = convex_hull_image(im1)
     imageBox = Image.fromarray((chull*255).astype(np.uint8)).getbbox()
     cropped = Image.fromarray(np.array(img)).crop(imageBox)
-    return cropped
+    width, height = cropped.size
+    if(width>=height):
+        isAddPadding = False
+    print(isAddPadding)
+    return cropped, isAddPadding
 
 def prepare_image(img, show=False):
     img_array_expanded_dims = np.expand_dims(img, axis=0)

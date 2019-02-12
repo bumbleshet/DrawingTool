@@ -2,6 +2,7 @@
 from tkinter import *
 from tkinter import messagebox, filedialog, simpledialog
 from PIL import Image, ImageDraw, ImageTk
+import tkinter as tk
 import pyscreenshot as ImageGrab
 import imageProcessing
 
@@ -15,33 +16,39 @@ class SimpleDrawingApp(object):
 
     def __init__(self):
         self.root = Tk()
+        self.root.resizable(False, False)
         self.root.title('Drawing App')
         messagebox.showinfo("Directions", "I want you to make a picture of a person. Make the very best picture that you can. Take your time and work very carefully. Try very hard and see what a good picture you can make.")
         self.root.bind('<Control-z>', self.undo) 
         self.root.bind('<Control-y>', self.redo) 
-        self.opn_img_btn = Button(self.root, text='Open Image', command=self.open_img, width=8)
-        self.opn_img_btn.grid(row=0, column=0)
+        self.dir_btn = Button(self.root, text='Directions', command=self.directions, width=12)
+        self.dir_btn.grid(row=0, column=0, sticky="nsew")
 
-        self.pen_button = Button(self.root, text='Pen', command=self.use_pen, width=8)
-        self.pen_button.grid(row=0, column=1)
+        self.opn_img_btn = Button(self.root, text='Open Image', command=self.open_img, width=12)
+        self.opn_img_btn.grid(row=0, column=1, sticky="nsew")
 
-        self.eraser_button = Button(self.root, text='Eraser', command=self.use_eraser, width=8)
-        self.eraser_button.grid(row=0, column=2)
+        self.pen_button = Button(self.root, text='Pen', command=self.use_pen, width=12)
+        self.pen_button.grid(row=1, column=0, sticky="nsew")
 
-        self.clear_all_button = Button(self.root, text='Erase All', command=self.clear_all, width=8)
-        self.clear_all_button.grid(row=0, column=3)
+        self.eraser_button = Button(self.root, text='Eraser', command=self.use_eraser, width=12)
+        self.eraser_button.grid(row=1, column=1, sticky="nsew")
 
+        Label(text="Pen/Eraser Size:", font=(None, 12)).grid(row=2, column=0, sticky="nsew")
         self.choose_size_button = Scale(self.root, from_=1, to=10, orient=HORIZONTAL)
-        self.choose_size_button.grid(row=0, column=4)
+        self.choose_size_button.grid(row=2, column=1, sticky="nsew")
 
-        self.predict_button = Button(self.root, text='Predict', command=self.predict, width=15)
-        self.predict_button.grid(row=0, column=5)
+        self.clear_all_button = Button(self.root, text='Erase All', command=self.clear_all, width=12)
+        self.clear_all_button.grid(row=3, column=0, sticky="nsew")
+        
+
+        self.predict_button = Button(self.root, text='Predict', command=self.predict, width=12)
+        self.predict_button.grid(row=3, column=1, sticky="nsew")
         self.stack = [] 
         self.temp_stack = [] 
         self.deleted_stack = []
         self.erase_all_bool = False
-        
-        self.create_canvas()   
+        # self.count = 0
+        self.create_canvas()
 
     def setup(self):
         self.old_x = None
@@ -58,7 +65,10 @@ class SimpleDrawingApp(object):
         self.loadImage = Image.open(self.root.fileName)    
         self.loadImage = self.loadImage.resize((600,600), Image.BICUBIC) 
         self.loadImage = ImageTk.PhotoImage(self.loadImage)
-        self.c.create_image(0, 0, anchor="nw", image=self.loadImage)                                
+        self.c.create_image(0, 0, anchor="nw", image=self.loadImage)
+
+    def directions(self):
+        messagebox.showinfo("Directions", "I want you to make a picture of a person. Make the very best picture that you can. Take your time and work very carefully. Try very hard and see what a good picture you can make.")                             
         
     def use_pen(self):
         self.activate_button(self.pen_button)
@@ -68,11 +78,12 @@ class SimpleDrawingApp(object):
 
     def create_canvas(self):
         self.c = Canvas(self.root, bg='white', width=self.DEFAULT_SIZE, height=self.DEFAULT_SIZE)
-        self.c.grid(row=1, columnspan=6)
+        self.c.grid(row=0,rowspan=16, column=4, columnspan=6)
         self.setup()
         self.root.mainloop()
 
     def clear_all(self):
+        
         self.erase_all_bool = True
         self.temp_image = self.getter(self.c)
         self.temp_image = ImageTk.PhotoImage(self.temp_image)
@@ -82,16 +93,26 @@ class SimpleDrawingApp(object):
         self.deleted_stack = []
 
     def predict(self):
-        self.toProcessImg = self.getter(self.c)
-        self.toProcessImg = imageProcessing.rm_white_space(self.toProcessImg, Image)
-        self.toProcessImg = self.toProcessImg.resize((150,150), Image.BICUBIC)
-        self.toProcessImg = imageProcessing.add_white_border(self.toProcessImg, Image)
-        self.toProcessImg = self.toProcessImg.resize((150,150), Image.BICUBIC)
+        isAddPadding = True
         
+        self.toProcessImg = self.getter(self.c)
+        self.toProcessImg, isAddPadding = imageProcessing.rm_white_space(self.toProcessImg, Image)
+        self.toProcessImg = self.toProcessImg.resize((150,150), Image.BICUBIC)
+        # print(isAddPadding)
+        if(isAddPadding):
+            self.toProcessImg = imageProcessing.add_white_border(self.toProcessImg, Image)
+            self.toProcessImg = self.toProcessImg.resize((150,150), Image.BICUBIC)
+        # self.count=self.count+1
+        # self.toProcessImg.save('predict'+str(self.count)+'.jpg')
         self.predicted_class = imageProcessing.predict_class(self.toProcessImg)
         years = simpledialog.askinteger("What's your age?", self.root)
-        months = simpledialog.askinteger("How many months until your birthday?", self.root)
+        months = MyDialog(self.root, "How many months until your birthday?").result
         years = (years*12) + months
+        print(years)
+        if(years>156):
+            years=156
+        elif(years<12):
+            messagebox.showinfo("Information","Age invalid, only 1-13")
         if(self.predicted_class==1):
             messagebox.showinfo("Information","I'm sorry, I can't recognize the drawing")
         elif(self.predicted_class==2):
@@ -107,6 +128,7 @@ class SimpleDrawingApp(object):
         self.eraser_on = eraser_mode
 
     def paint(self, event):
+        self.erase_all_bool = False
         self.line_width = self.choose_size_button.get()+self.DEFAULT_ADD_PEN
         paint_color = 'white' if self.eraser_on else self.color
         attib = dict()
@@ -162,7 +184,28 @@ class SimpleDrawingApp(object):
     def reset(self, event):
         self.old_x, self.old_y = None, None
 
+#customize varaible
+class MyDialog(simpledialog.Dialog):
+    def body(self, master):
+        self.geometry("400x75")
+        tk.Label(master).grid(row=0)
 
+        self.e1 = tk.Entry(master)
+        self.e1.grid(row=0)
+        return self.e1
+    
+    def validate(self):
+        try:
+            first = self.e1.get()
+            val = int(first)
+            self.result = val
+            return 1
+        except ValueError:
+            messagebox.showwarning(
+                "Illegal value",
+                "Not an integer. Please try again"
+            )
+            return 0
 
 if __name__ == '__main__':
     SimpleDrawingApp()
